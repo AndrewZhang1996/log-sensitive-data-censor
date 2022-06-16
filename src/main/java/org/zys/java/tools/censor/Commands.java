@@ -26,4 +26,8 @@ public class Commands {
     public static final String REGEX = "--regex";
 
     public static final String REGEX_2 = "-r";
+
+    public static final String CLEAR = "--clear";
+
+    public static final String CLEAR_2 = "-c";
 }

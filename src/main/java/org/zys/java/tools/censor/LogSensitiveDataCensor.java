@@ -50,12 +50,14 @@ public class LogSensitiveDataCensor {
             System.out.println(ConsoleColors.BLUE_BOLD_BRIGHT + "--out / -o" + ConsoleColors.RESET + ": 输出文件");
             System.out.println(ConsoleColors.BLUE_BOLD_BRIGHT + "--date / -d" + ConsoleColors.RESET + ": 起始日期(包含), 格式必须为yyyy-MM-dd");
             System.out.println(ConsoleColors.BLUE_BOLD_BRIGHT + "--regex / -r" + ConsoleColors.RESET + ": 自定义正则表达式, 格式应为“自定义名称 表达式”. 定义多个表达式，格式应为“自定义名称1 表达式1 自定义名称2 表达式2 ...”. 自定义名称和表达式中不要含有空格!");
+            System.out.println(ConsoleColors.BLUE_BOLD_BRIGHT + "--clear / -c" + ConsoleColors.RESET + ": 不使用内置正则表达式，前提是必须使用了自定义正则表达式" + ConsoleColors.BLUE_BOLD_BRIGHT + "--regex / -r" + ConsoleColors.RESET + "，否则不生效。");
             return;
         }
         String inputFilePath = "";
         String outputFilePath = "";
         String startDate = "";
         Optional<String> param;
+        boolean clearOriRegex = false;
 
         boolean checkParam = (argsList.contains(Commands.IN) ^ argsList.contains(Commands.IN_2)) && (argsList.contains(Commands.OUT) ^ argsList.contains(Commands.OUT_2));
         if (checkParam) {
@@ -111,8 +113,6 @@ public class LogSensitiveDataCensor {
                         System.out.println(ConsoleColors.RED_BRIGHT + "输入起始日期格式错误!" + ConsoleColors.RESET);
                         checkParam = false;
                     }
-                } else {
-                    checkParam = false;
                 }
             } else {
                 param = getParam(argsList, Commands.DATE_2);
@@ -128,13 +128,12 @@ public class LogSensitiveDataCensor {
                     } else {
                         checkParam = false;
                     }
-                } else {
-                    checkParam = false;
                 }
             }
         }
         if (checkParam) {
             Optional<List<String>> regexParam = getParamRegex(argsList, Commands.REGEX);
+            boolean regexExists = false;
             if (regexParam.isPresent()) {
                 String key = null;
                 String value = null;
@@ -149,6 +148,7 @@ public class LogSensitiveDataCensor {
                         value = null;
                     }
                 }
+                regexExists = true;
             } else {
                 regexParam = getParamRegex(argsList, Commands.REGEX_2);
                 if (regexParam.isPresent()) {
@@ -165,11 +165,23 @@ public class LogSensitiveDataCensor {
                             value = null;
                         }
                     }
+                    regexExists = true;
+                }
+            }
+            if (regexExists) {
+                param = getParam(argsList, Commands.CLEAR);
+                if (param.isPresent()) {
+                    clearOriRegex = true;
+                } else {
+                    param = getParam(argsList, Commands.CLEAR_2);
+                    if (param.isPresent()) {
+                        clearOriRegex = true;
+                    }
                 }
             }
         }
         if (checkParam && inputFilePath.length() > 0 && outputFilePath.length() > 0) {
-            bufferedReaderReadFile(inputFilePath, outputFilePath, startDate);
+            bufferedReaderReadFile(inputFilePath, outputFilePath, startDate, clearOriRegex);
             System.out.println(ConsoleColors.GREEN_BRIGHT + "完成" + ConsoleColors.RESET);
             return;
         }
@@ -201,7 +213,7 @@ public class LogSensitiveDataCensor {
         return Optional.empty();
     }
 
-    private static void bufferedReaderReadFile(String path, String outputPath, String startDate) {
+    private static void bufferedReaderReadFile(String path, String outputPath, String startDate, boolean clearOriRegex) {
         File inputFile = new File(path);
         long fileSize = 0L;
         if (!inputFile.exists()) {
@@ -245,55 +257,57 @@ public class LogSensitiveDataCensor {
                     startLine = true;
                 }
                 if (startLine) {
-                    Matcher ffCustomerMatcher = ffCustomer.matcher(line);
-                    Matcher mobilePhoneNumberMatcher = mobilePhoneNumber.matcher(line);
-                    Matcher idNoMatcher = idNo.matcher(line);
-                    Matcher emailMatcher = email.matcher(line);
-                    Matcher bankAccountMatcher = bankAccount.matcher(line);
-                    if (ffCustomerMatcher.find()) {
-                        sj.add("丰付客服4008908970");
-                        sbShort.append("丰付客服4008908970: \n");
-                        ffCustomerMatcher.reset();
-                        while(ffCustomerMatcher.find()) {
-                            sbShort.append(ffCustomerMatcher.group()).append("       ").append("\n");
+                    if (!clearOriRegex) {
+                        Matcher ffCustomerMatcher = ffCustomer.matcher(line);
+                        Matcher mobilePhoneNumberMatcher = mobilePhoneNumber.matcher(line);
+                        Matcher idNoMatcher = idNo.matcher(line);
+                        Matcher emailMatcher = email.matcher(line);
+                        Matcher bankAccountMatcher = bankAccount.matcher(line);
+                        if (ffCustomerMatcher.find()) {
+                            sj.add("丰付客服4008908970");
+                            sbShort.append("丰付客服4008908970: \n");
+                            ffCustomerMatcher.reset();
+                            while(ffCustomerMatcher.find()) {
+                                sbShort.append(ffCustomerMatcher.group()).append("       ").append("\n");
+                            }
+                            match = true;
                         }
-                        match = true;
-                    }
-                    if (mobilePhoneNumberMatcher.find()) {
-                        sj.add("手机号");
-                        sbShort.append("手机号: \n");
-                        mobilePhoneNumberMatcher.reset();
-                        while(mobilePhoneNumberMatcher.find()) {
-                            sbShort.append(mobilePhoneNumberMatcher.group()).append("       ").append("\n");
+                        if (mobilePhoneNumberMatcher.find()) {
+                            sj.add("手机号");
+                            sbShort.append("手机号: \n");
+                            mobilePhoneNumberMatcher.reset();
+                            while(mobilePhoneNumberMatcher.find()) {
+                                sbShort.append(mobilePhoneNumberMatcher.group()).append("       ").append("\n");
+                            }
+                            match = true;
                         }
-                        match = true;
-                    }
-                    if (idNoMatcher.find()) {
-                        sj.add("身份证号");
-                        sbShort.append("身份证号: \n");
-                        idNoMatcher.reset();
-                        while(idNoMatcher.find()) {
-                            sbShort.append(idNoMatcher.group()).append("       ").append("\n");
+                        if (idNoMatcher.find()) {
+                            sj.add("身份证号");
+                            sbShort.append("身份证号: \n");
+                            idNoMatcher.reset();
+                            while(idNoMatcher.find()) {
+                                sbShort.append(idNoMatcher.group()).append("       ").append("\n");
+                            }
+                            match = true;
                         }
-                        match = true;
-                    }
-                    if (emailMatcher.find()) {
-                        sj.add("邮箱");
-                        sbShort.append("邮箱: \n");
-                        emailMatcher.reset();
-                        while(emailMatcher.find()) {
-                            sbShort.append(emailMatcher.group()).append("       ").append("\n");
+                        if (emailMatcher.find()) {
+                            sj.add("邮箱");
+                            sbShort.append("邮箱: \n");
+                            emailMatcher.reset();
+                            while(emailMatcher.find()) {
+                                sbShort.append(emailMatcher.group()).append("       ").append("\n");
+                            }
+                            match = true;
                         }
-                        match = true;
-                    }
-                    if (bankAccountMatcher.find()) {
-                        sj.add("银行账号");
-                        sbShort.append("银行账号: \n");
-                        bankAccountMatcher.reset();
-                        while(bankAccountMatcher.find()) {
-                            sbShort.append(bankAccountMatcher.group()).append("       ").append("\n");
+                        if (bankAccountMatcher.find()) {
+                            sj.add("银行账号");
+                            sbShort.append("银行账号: \n");
+                            bankAccountMatcher.reset();
+                            while(bankAccountMatcher.find()) {
+                                sbShort.append(bankAccountMatcher.group()).append("       ").append("\n");
+                            }
+                            match = true;
                         }
-                        match = true;
                     }
                     if (!regexExtendPattern.isEmpty()) {
                         for (Map.Entry<String, Pattern> patternEntry : regexExtendPattern.entrySet()) {

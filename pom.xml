@@ -6,7 +6,7 @@
 
     <groupId>org.zys.java.tools</groupId>
     <artifactId>log-sensitive-data-censor</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <properties>
         <!-- 文件拷贝时的编码 -->
