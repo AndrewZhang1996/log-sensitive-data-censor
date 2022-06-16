@@ -18,17 +18,12 @@ import java.util.regex.Pattern;
  */
 public class LogSensitiveDataCensor {
 
-//    private static final String CONTAIN_MOBILE_PHONE_NUMBER_REGEX = "^.*\\D+1[3456789]\\d{9}\\D+.*$";
     private static final String CONTAIN_MOBILE_PHONE_NUMBER_REGEX = "\\D+1[3456789]\\d{9}\\D+";
 
     private static final String CONTAIN_POSSIBLE_CHINESE_NAME_REGEX = "^.*\\[.*[\\u4e00-\\u9fa5]{2,3}.*].*$";
 
-//    private static final String CONTAIN_ID_NO_REGEX = "^.*\\D+(([1][1-5])|([2][1-3])|([3][1-7])|([4][1-6])|([5][0-4])|([6][1-5])|([7][1])|([8][1-2]))\\d{4}(([1][9]\\d{2})|([2]\\d{3}))(([0][1-9])|([1][0-2]))(([0][1-9])|([1-2][0-9])|([3][0-1]))\\d{3}[0-9xX]\\D+.*$";
-
-//    private static final String CONTAIN_ID_NO_REGEX = "^.*\\D+[1-9]\\d{5}(18|19|20)\\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\\d{3}[0-9Xx]\\D+.*$";
     private static final String CONTAIN_ID_NO_REGEX = "\\D+[1-9]\\d{5}(18|19|20)\\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\\d{3}[0-9Xx]\\D+";
 
-//    private static final String CONTAIN_BANK_ACCOUNT_REGEX = "^.*\\D+(1|[3-5])(\\d{11}|\\d{15}|\\d{16}|\\d{17}|\\d{18})\\D+.*$";
     private static final String CONTAIN_BANK_ACCOUNT_REGEX = "\\D+(1|[3-5])(\\d{11}|\\d{15}|\\d{16}|\\d{17}|\\d{18})\\D+";
 
     private static final String CONTAIN_EMAIL_REGEX = "[A-Za-z0-9\\\\u4e00-\\\\u9fa5]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+";
@@ -42,9 +37,6 @@ public class LogSensitiveDataCensor {
     private static Map<String, String> regexExtendMap = new HashMap<>();
 
     public static void main(String[] args) {
-//        String path = "D:\\工作\\学习资料\\my-java-tools\\log-sensitive-data-censor\\src\\main\\resource\\hpstempquery.log";
-//        String path = "C:\\Users\\Administrator\\Documents\\敏感数据排查\\hpsquery-228-1.log";
-//        String outputpath = "C:\\Users\\Administrator\\Documents\\敏感数据排查\\hpsquery-228-1.log.output.log";
 
         if (args.length == 0) {
             System.out.println(ConsoleColors.RED_BRIGHT + "请输入参数!" + ConsoleColors.RESET + "\n" +
@@ -211,7 +203,7 @@ public class LogSensitiveDataCensor {
 
     private static void bufferedReaderReadFile(String path, String outputPath, String startDate) {
         File inputFile = new File(path);
-        Long fileSize = 0L;
+        long fileSize = 0L;
         if (!inputFile.exists()) {
             System.out.println("不存在文件[" + ConsoleColors.RED_BRIGHT + path + ConsoleColors.RESET + "]");
             return;
@@ -223,8 +215,6 @@ public class LogSensitiveDataCensor {
         BufferedReader bufferedReader = null;
         OutputStreamWriter writer = null;
         BufferedWriter bufferedWriter = null;
-        OutputStreamWriter writerShort = null;
-        BufferedWriter bufferedWriterShort = null;
         try {
             reader = new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8);
             bufferedReader = new BufferedReader(reader);
@@ -239,13 +229,6 @@ public class LogSensitiveDataCensor {
             NumberFormat num = NumberFormat.getPercentInstance();
             String dateRegex = ".*";
             if (startDate.length() > 0) {
-//                Date start = new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-//                if (start.after(new Date())) {
-//                    System.out.println("输入时间大于当前时间!");
-//                    return;
-//                }
-//                List<String> dateList = DateTimeRegex.dateUntilNowFormat(start);
-//                dateRegex = "^" + dateList.get(dateList.size() - 1);
                 dateRegex = "^" + startDate;
             }
             Pattern datePattern = Pattern.compile(dateRegex);
@@ -335,7 +318,6 @@ public class LogSensitiveDataCensor {
                     if (match) {
                         bufferedWriter.write("行号：" + currentLine + ", 可能存在" + sj + ": ");
                         bufferedWriter.newLine();
-//                    bufferedWriter.write(line);
                         bufferedWriter.write(sbShort.toString());
                         bufferedWriter.newLine();
                         bufferedWriter.write("\n\n");
@@ -346,7 +328,7 @@ public class LogSensitiveDataCensor {
                 }
                 currentLine++;
                 hasRead += line.getBytes().length;
-                System.out.print("当前进度：" + ConsoleColors.GREEN_BRIGHT + num.format(hasRead/fileSize.doubleValue()) + ConsoleColors.RESET + "\r");
+                System.out.print("当前进度：" + ConsoleColors.GREEN_BRIGHT + num.format(hasRead/ (double) fileSize) + ConsoleColors.RESET + "\r");
             }
             bufferedWriter.flush();
         } catch (Exception e) {
@@ -373,44 +355,6 @@ public class LogSensitiveDataCensor {
                     bufferedWriter.flush();
                     bufferedWriter.close();
                 } catch (Exception ignored) {}
-            }
-            if (writerShort != null) {
-                try {
-                    writerShort.flush();
-                    writerShort.close();
-                } catch (Exception ignored) {}
-            }
-            if (bufferedWriterShort != null) {
-                try {
-                    bufferedWriterShort.flush();
-                    bufferedWriterShort.close();
-                } catch (Exception ignored) {}
-            }
-        }
-    }
-
-    private static void bufferedInputStreamReadFile(String path) {
-        InputStream inputStream = null;
-        BufferedInputStream bufferedInputStream = null;
-        try {
-            inputStream = new FileInputStream(path);
-            bufferedInputStream = new BufferedInputStream(inputStream);
-            byte[] buffer = new byte[10240];
-            while (bufferedInputStream.read(buffer) != -1) {
-                System.out.println(new String(buffer));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (Exception ignored){};
-            }
-            if (bufferedInputStream != null) {
-                try {
-                    bufferedInputStream.close();
-                } catch (Exception ignored){};
             }
         }
     }
