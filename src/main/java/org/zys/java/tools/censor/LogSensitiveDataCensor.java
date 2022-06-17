@@ -20,8 +20,6 @@ public class LogSensitiveDataCensor {
 
     private static final String CONTAIN_MOBILE_PHONE_NUMBER_REGEX = "\\D+1[3456789]\\d{9}\\D+";
 
-    private static final String CONTAIN_POSSIBLE_CHINESE_NAME_REGEX = "^.*\\[.*[\\u4e00-\\u9fa5]{2,3}.*].*$";
-
     private static final String CONTAIN_ID_NO_REGEX = "\\D+[1-9]\\d{5}(18|19|20)\\d{2}((0[1-9])|(1[0-2]))(([0-2][1-9])|10|20|30|31)\\d{3}[0-9Xx]\\D+";
 
     private static final String CONTAIN_BANK_ACCOUNT_REGEX = "\\D+(1|[3-5])(\\d{11}|\\d{15}|\\d{16}|\\d{17}|\\d{18})\\D+";
